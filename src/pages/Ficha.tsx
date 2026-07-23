@@ -20,6 +20,7 @@ import {
 import EvaChart, { type PontoEva } from '../components/EvaChart'
 import CabecalhoPaciente from '../components/ficha/CabecalhoPaciente'
 import ColarPrograma from '../components/ficha/ColarPrograma'
+import PropostaAberta from '../components/ficha/PropostaAberta'
 import HistoriaFeed from '../components/ficha/HistoriaFeed'
 import FolhaWhatsApp, { type OpcaoMensagem } from '../components/ficha/FolhaWhatsApp'
 import RelatorioImpressao from '../components/ficha/RelatorioImpressao'
@@ -166,6 +167,9 @@ export default function Ficha() {
     primeiraConcluidaHoje,
     temPropostaDaPrimeira,
     mensagemDevida: mensagensHoje[0] ?? null,
+    temAgendamentoFuturo: agendamentos.some(
+      (a) => a.status === 'agendada' && !ehHoje(a.inicio) && new Date(a.inicio).getTime() > Date.now(),
+    ),
   })
 
   // A curva da dor: sessões concluídas, ponto por sessão (spec §1.2)
@@ -394,6 +398,15 @@ export default function Ficha() {
           propostaPendente={propostaPendente}
           avaliacaoCheckpoint={checkpointRef}
         />
+
+        {propostaPendente && paciente && (
+          <PropostaAberta
+            proposta={propostaPendente}
+            paciente={paciente}
+            config={config}
+            aoMudar={() => void carregar()}
+          />
+        )}
 
         <section className="stack">
           <span className="eyebrow">História</span>

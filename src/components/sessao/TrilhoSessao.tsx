@@ -68,7 +68,14 @@ export default function TrilhoSessao({ pacote }: { pacote: PacoteSessao }) {
       const doCiclo = pacote.avaliacoes.find((a) => a.ciclo_id === sessao.ciclo_id && a.tipo === 'inicial')
       if (doCiclo) return doCiclo
     }
-    return pacote.avaliacoes.find((a) => a.sessao_id === sessao.id && a.tipo === 'inicial') ?? null
+    const daSessao = pacote.avaliacoes.find((a) => a.sessao_id === sessao.id && a.tipo === 'inicial')
+    if (daSessao) return daSessao
+    // Fallback: a inicial mais recente da paciente (protege o checkpoint quando
+    // o ciclo foi fechado depois e o backfill do ciclo_id não aconteceu).
+    const iniciais = pacote.avaliacoes
+      .filter((a) => a.tipo === 'inicial')
+      .sort((a, b) => (a.criado_em < b.criado_em ? 1 : -1))
+    return iniciais[0] ?? null
   }, [pacote.avaliacoes, sessao.ciclo_id, sessao.id])
 
   const [avaliacaoCheckpoint, setCheckpoint] = useState<Avaliacao | null>(

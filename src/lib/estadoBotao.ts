@@ -31,6 +31,7 @@ export type DadosBotao = {
   primeiraConcluidaHoje: Sessao | null // tipo primeira, concluída hoje
   temPropostaDaPrimeira: boolean
   mensagemDevida: MensagemHoje | null // desta paciente, na v_mensagens_hoje
+  temAgendamentoFuturo?: boolean // alguma sessão agendada depois de hoje
 }
 
 const ROTULO_PASSO: Record<string, string> = {
@@ -44,6 +45,18 @@ const ROTULO_PASSO: Record<string, string> = {
   intercorrencia: 'no "correu tudo bem?"',
   orientacao: 'na orientação de casa',
   proxima: 'na próxima sessão',
+  termo: 'no termo de consentimento',
+  condicao: 'na condição',
+  historia: 'na história',
+  red_flags: 'nas perguntas de segurança',
+  cautelas: 'nas cautelas',
+  mapa: 'no mapa do corpo',
+  frases: 'nas frases dela',
+  frequencia: 'na frequência da dor',
+  veredito: 'na reavaliação',
+  prescricao: 'na prescrição',
+  desfecho: 'no desfecho',
+  pagamento: 'no pagamento',
 }
 
 export function calcularBotaoEstado(d: DadosBotao): BotaoEstado {
@@ -103,8 +116,13 @@ export function calcularBotaoEstado(d: DadosBotao): BotaoEstado {
     }
   }
 
-  // 8. ciclo ativo sem próxima sessão marcada
-  if (d.cicloAtivo && d.sessoesDoCiclo.length < d.cicloAtivo.sessoes_total && !d.agendamentoHoje) {
+  // 8. ciclo ativo sem próxima sessão marcada (nem hoje, nem no futuro)
+  if (
+    d.cicloAtivo &&
+    d.sessoesDoCiclo.length < d.cicloAtivo.sessoes_total &&
+    !d.agendamentoHoje &&
+    !d.temAgendamentoFuturo
+  ) {
     return { rotulo: 'Marcar a próxima sessão', acao: { tipo: 'marcar_proxima' } }
   }
 

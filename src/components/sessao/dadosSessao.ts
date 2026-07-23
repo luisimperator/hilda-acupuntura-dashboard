@@ -277,7 +277,7 @@ export async function fecharPrograma(args: {
   const preco =
     args.programa === 'reset_10'
       ? (args.config?.preco_reset_centavos ?? 340000)
-      : (args.config?.preco_alivio_centavos ?? 190000)
+      : (args.config?.preco_alivio_centavos ?? 180000)
   const credito = args.config?.preco_primeira_centavos ?? 45000
   const hoje = dataISO(new Date())
 

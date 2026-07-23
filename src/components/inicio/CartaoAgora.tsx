@@ -36,6 +36,8 @@ const NOME_PASSO: Record<string, string> = {
   frequencia: 'a frequência da dor',
   eva_base: 'a dor de partida',
   reavaliacao: 'a reavaliação',
+  veredito: 'a reavaliação',
+  prescricao: 'a prescrição',
   proposta: 'a proposta',
   desfecho: 'o desfecho',
   pagamento: 'o pagamento',
