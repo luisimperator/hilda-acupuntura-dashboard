@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
-import { dataHora } from '../lib/formatar'
+import { dataHora } from '../lib/datas'
 
 type Conhecimento = {
   id: string
