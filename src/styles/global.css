@@ -1,0 +1,408 @@
+/* ============================================================
+   Design system — Consultório Hilda de Oliveira
+   Mesma marca da landing (cream/jade/cinnabar), calibrada para
+   uma usuária 60+: tipo grande, alvos de toque >= 56px, alto contraste.
+   ============================================================ */
+
+:root {
+  --cream: #f7f2ea;
+  --sand: #efe6d8;
+  --card: #fffdf9;
+  --ink: #1f1b16;
+  --ink-60: #5c554b;
+  --stone: #94897a;
+  --jade: #2c5245;
+  --jade-deep: #1c382f;
+  --jade-soft: #e3ece7;
+  --cinnabar: #be3a25;
+  --cinnabar-soft: #f7e4df;
+  --gold: #c29a5b;
+  --gold-soft: #f3e9d9;
+  --ok: #2c5245;
+  --chart-pre: #cc5530; /* série "EVA antes" — validada p/ CVD sobre #FFFDF9 */
+  --chart-pos: #0e9060; /* série "EVA depois" — validada p/ CVD sobre #FFFDF9 */
+  --hairline: rgba(31, 27, 22, 0.12);
+  --hairline-strong: rgba(31, 27, 22, 0.26);
+  --shadow-card: 0 20px 50px -30px rgba(31, 27, 22, 0.28);
+  --r: 18px;
+  --r-sm: 12px;
+  --font-display: 'Gloock', Georgia, serif;
+  --font-body: 'Instrument Sans', -apple-system, sans-serif;
+  --font-mono: 'Spline Sans Mono', monospace;
+  --touch: 56px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  background: var(--cream);
+  color-scheme: only light;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 19px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+::selection { background: var(--jade); color: var(--cream); }
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+}
+h1 { font-size: clamp(30px, 4.5vw, 44px); }
+h2 { font-size: clamp(24px, 3.4vw, 32px); }
+h3 { font-size: clamp(20px, 2.6vw, 24px); }
+
+p { line-height: 1.6; }
+
+a { color: var(--jade); }
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+button:disabled { cursor: not-allowed; opacity: 0.45; }
+
+input, select, textarea {
+  font-family: var(--font-body);
+  font-size: 19px;
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------- utilitários de texto ---------- */
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--jade);
+  font-weight: 500;
+}
+
+.muted { color: var(--ink-60); }
+.small { font-size: 16px; }
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.num-display {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  line-height: 0.95;
+}
+
+/* ---------- layout ---------- */
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+.stack > * + * { margin-top: 16px; }
+.stack-lg > * + * { margin-top: 28px; }
+.row { display: flex; align-items: center; gap: 14px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* ---------- cartões ---------- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.card-flat {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r);
+  padding: 20px;
+}
+
+/* ---------- botões ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: var(--touch);
+  padding: 14px 26px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 18px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.12s;
+  border: 1.5px solid transparent;
+}
+.btn:active { transform: scale(0.98); }
+
+.btn-primary {
+  background: var(--jade);
+  color: var(--cream);
+  box-shadow: 0 14px 30px -14px rgba(28, 56, 47, 0.5);
+}
+.btn-primary:hover { background: var(--jade-deep); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--jade);
+  border-color: var(--hairline-strong);
+}
+.btn-ghost:hover { background: var(--jade-soft); }
+
+.btn-danger-ghost {
+  background: transparent;
+  color: var(--cinnabar);
+  border-color: rgba(190, 58, 37, 0.4);
+}
+.btn-danger-ghost:hover { background: var(--cinnabar-soft); }
+
+.btn-whatsapp {
+  background: #1f7a4d;
+  color: #fff;
+  box-shadow: 0 14px 30px -14px rgba(31, 122, 77, 0.5);
+}
+.btn-whatsapp:hover { background: #17603c; }
+
+.btn-xl {
+  width: 100%;
+  min-height: 72px;
+  font-size: 21px;
+  border-radius: var(--r);
+}
+
+.btn-block { width: 100%; }
+
+/* ---------- formulários ---------- */
+
+.field { display: block; }
+.field > .field-label {
+  display: block;
+  font-weight: 600;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.field > .field-hint {
+  font-size: 15.5px;
+  color: var(--ink-60);
+  margin-top: 6px;
+}
+
+.input, .select, .textarea {
+  width: 100%;
+  min-height: var(--touch);
+  padding: 14px 16px;
+  border: 1.5px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  background: var(--card);
+}
+.textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+.input:focus, .select:focus, .textarea:focus {
+  border-color: var(--jade);
+  outline: 3px solid rgba(44, 82, 69, 0.18);
+  outline-offset: 0;
+}
+
+/* ---------- escala EVA (0–10) ---------- */
+
+.eva-grid {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 8px;
+}
+@media (max-width: 720px) {
+  .eva-grid { grid-template-columns: repeat(6, 1fr); }
+}
+
+.eva-btn {
+  min-height: 64px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--hairline-strong);
+  background: var(--card);
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.12s, background 0.15s, border-color 0.15s;
+}
+.eva-btn:hover { transform: translateY(-2px); }
+.eva-btn[data-selected='true'] {
+  background: var(--jade);
+  border-color: var(--jade);
+  color: var(--cream);
+  box-shadow: 0 12px 26px -12px rgba(28, 56, 47, 0.55);
+}
+.eva-btn[data-selected='true'].eva-alta {
+  background: var(--cinnabar);
+  border-color: var(--cinnabar);
+}
+
+/* ---------- opções grandes (sim/não, escolhas) ---------- */
+
+.choice-row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.choice {
+  min-height: var(--touch);
+  padding: 14px 24px;
+  border-radius: 99px;
+  border: 1.5px solid var(--hairline-strong);
+  background: var(--card);
+  font-weight: 600;
+  font-size: 18px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.choice[data-selected='true'] {
+  background: var(--jade);
+  border-color: var(--jade);
+  color: var(--cream);
+}
+
+/* ---------- selos / estados ---------- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pill-jade { background: var(--jade-soft); color: var(--jade-deep); }
+.pill-gold { background: var(--gold-soft); color: #7a5c26; }
+.pill-red { background: var(--cinnabar-soft); color: var(--cinnabar); }
+.pill-sand { background: var(--sand); color: var(--ink-60); }
+
+/* ---------- navegação principal ---------- */
+
+.topnav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(247, 242, 234, 0.94);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--hairline);
+}
+.topnav-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.topnav .wordmark {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab {
+  min-height: 52px;
+  padding: 10px 22px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 17.5px;
+  color: var(--ink-60);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.tab:hover { background: var(--sand); color: var(--ink); }
+.tab[aria-current='page'], .tab.active {
+  background: var(--jade);
+  color: var(--cream);
+}
+
+@media (max-width: 760px) {
+  .topnav-inner { flex-direction: column; align-items: stretch; }
+  .tabs { justify-content: space-between; }
+  .tab { flex: 1; justify-content: center; padding: 10px 8px; }
+}
+
+/* ---------- lista de toque (linhas grandes clicáveis) ---------- */
+
+.touch-list { display: flex; flex-direction: column; gap: 12px; }
+.touch-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  min-height: 76px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.12s, box-shadow 0.15s, border-color 0.15s;
+}
+.touch-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+  border-color: var(--hairline-strong);
+}
+
+/* ---------- barra de progresso do ciclo ---------- */
+
+.progress-dots { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.progress-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--sand);
+  border: 1.5px solid var(--hairline-strong);
+}
+.progress-dot[data-done='true'] { background: var(--jade); border-color: var(--jade); }
+.progress-dot[data-checkpoint='true'] { border-color: var(--gold); border-width: 3px; }
+
+/* ---------- diversos ---------- */
+
+.divider { border: none; border-top: 1px solid var(--hairline); margin: 20px 0; }
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--ink-60);
+}
+.empty-state .big { font-size: 44px; margin-bottom: 12px; }
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--jade-deep);
+  color: var(--cream);
+  padding: 16px 28px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 17px;
+  box-shadow: 0 20px 44px -18px rgba(28, 56, 47, 0.6);
+  z-index: 300;
+}
