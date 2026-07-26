@@ -18,7 +18,9 @@ import {
   type WaTemplate,
 } from '../lib/tipos'
 import EvaChart, { type PontoEva } from '../components/EvaChart'
+import DialogoRemarcar from '../components/agenda/DialogoRemarcar'
 import CabecalhoPaciente from '../components/ficha/CabecalhoPaciente'
+import FolhaComecarAgora from '../components/ficha/FolhaComecarAgora'
 import ColarPrograma from '../components/ficha/ColarPrograma'
 import PropostaAberta from '../components/ficha/PropostaAberta'
 import HistoriaFeed from '../components/ficha/HistoriaFeed'
@@ -65,6 +67,8 @@ export default function Ficha() {
   const [erroAcao, setErroAcao] = useState<string | null>(null)
   const [folhaAberta, setFolhaAberta] = useState(false)
   const [dialogoFase, setDialogoFase] = useState(false)
+  const [folhaAgora, setFolhaAgora] = useState(false)
+  const [remarcando, setRemarcando] = useState<Agendamento | null>(null)
   const [vagas, setVagas] = useState<Vaga[] | null>(null)
 
   const carregar = useCallback(async () => {
@@ -155,6 +159,14 @@ export default function Ficha() {
   const temPropostaDaPrimeira = primeiraConcluidaHoje
     ? propostas.some((p) => p.sessao_id === primeiraConcluidaHoje.id)
     : false
+
+  // A sessão marcada que ainda está de pé — é ela que o botão "Remarcar" move e
+  // que a folha "Começar agora" oferece aproveitar. Inclui a de hoje que já
+  // passou da hora (não veio): remarcar é justamente o que se faz com ela.
+  const proximaMarcada =
+    agendamentos.find(
+      (a) => a.status === 'agendada' && (ehHoje(a.inicio) || new Date(a.inicio).getTime() > Date.now()),
+    ) ?? null
 
   const estado = calcularBotaoEstado({
     paciente,
@@ -359,6 +371,8 @@ export default function Ficha() {
   }
 
   const rotuloBotao = `${estado.rotulo} →`
+  // Se o botão-estado já abre a sessão, "Começar agora" seria o mesmo botão duas vezes.
+  const podeComecarAgora = estado.acao.tipo !== 'comecar_sessao' && estado.acao.tipo !== 'continuar_sessao'
 
   return (
     <>
@@ -414,6 +428,22 @@ export default function Ficha() {
         </section>
 
         <div className="row" style={{ flexWrap: 'wrap' }}>
+          {/* A paciente na frente dela vale mais que a agenda: começar não depende do horário */}
+          {podeComecarAgora && (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              style={{ borderColor: 'var(--jade)', color: 'var(--jade)', fontWeight: 700 }}
+              onClick={() => setFolhaAgora(true)}
+            >
+              ▶ Começar agora
+            </button>
+          )}
+          {proximaMarcada && (
+            <button type="button" className="btn btn-ghost" onClick={() => setRemarcando(proximaMarcada)}>
+              Remarcar
+            </button>
+          )}
           <button type="button" className="btn btn-ghost" onClick={() => void abrirFolha()}>
             💬 WhatsApp
           </button>
@@ -461,6 +491,30 @@ export default function Ficha() {
 
       {folhaAberta && (
         <FolhaWhatsApp paciente={paciente} opcoes={montarOpcoes()} aoFechar={() => setFolhaAberta(false)} />
+      )}
+
+      {folhaAgora && (
+        <FolhaComecarAgora
+          paciente={paciente}
+          cicloAtivo={cicloAtivo}
+          sessoesDoCiclo={sessoesDoCicloAtivo}
+          // Vaga de retorno da proposta não é sessão: não dá para "vir no lugar dela"
+          marcada={proximaMarcada?.tipo === 'retorno_proposta' ? null : proximaMarcada}
+          duracaoPrimeiraMin={config?.duracao_primeira_min ?? 90}
+          duracaoCicloMin={config?.duracao_ciclo_min ?? 50}
+          aoComecou={(sessaoId) => navigate(`/sessao/${sessaoId}`)}
+          aoFechar={() => setFolhaAgora(false)}
+        />
+      )}
+
+      {remarcando && (
+        <DialogoRemarcar
+          agendamento={remarcando}
+          paciente={paciente}
+          novoInicio={null}
+          aoRemarcou={() => void carregar()}
+          aoFechar={() => setRemarcando(null)}
+        />
       )}
 
       {dialogoFase && (

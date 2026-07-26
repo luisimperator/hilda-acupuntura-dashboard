@@ -2,6 +2,7 @@
 // (Início) e pelo botão-estado (Ficha). Uma implementação só, para os dois.
 
 import { supabase } from './supabase'
+import { dataISO, diaDaSemana, instanteDoDia, somarDias } from './datas'
 import type { Agendamento, Ciclo, Paciente, Sessao } from './tipos'
 import { PROTOCOLOS } from './protocolos'
 
@@ -70,39 +71,60 @@ export function varianteDaSessao(sessao: Pick<Sessao, 'tipo' | 'numero_no_ciclo'
   return 'ciclo'
 }
 
-/** Próximas N vagas realmente livres da agenda (para scripts de WhatsApp e defaults). */
-export async function proximasVagasLivres(quantas = 2): Promise<{ inicio: string }[]> {
-  const { data: config } = await supabase.from('config').select('grade, duracao_ciclo_min').eq('id', true).maybeSingle()
+/**
+ * Próximas N vagas realmente livres da agenda (para scripts de WhatsApp, para
+ * os defaults e para a folha de remarcar).
+ *
+ * `duracaoMin` (ou `paraPrimeira`, que usa a duração da Primeira da config) =
+ * quanto a sessão precisa caber: uma Primeira de 90 min só entra onde os 90 min
+ * inteiros estão livres. Ocupação é comparada como INTERVALO, não como horário
+ * de início — uma sessão de 90 min bloqueia o slot seguinte.
+ * `ignorarAgendamentoId` tira da conta a própria sessão que está sendo remarcada.
+ */
+export async function proximasVagasLivres(
+  quantas = 2,
+  opcoes?: { duracaoMin?: number; paraPrimeira?: boolean; ignorarAgendamentoId?: string },
+): Promise<{ inicio: string }[]> {
+  const { data: config } = await supabase
+    .from('config')
+    .select('grade, duracao_ciclo_min, duracao_primeira_min')
+    .eq('id', true)
+    .maybeSingle()
   const grade = (config?.grade as { dia: number; turnos: [string, string][] }[] | null) ?? []
   if (grade.length === 0) return []
 
+  const passoMin = config?.duracao_ciclo_min ?? 50
+  const duracaoMin =
+    opcoes?.duracaoMin ?? (opcoes?.paraPrimeira ? (config?.duracao_primeira_min ?? 90) : passoMin)
+
+  // Pega também o que começou nas últimas horas: uma sessão longa ainda ocupa a sala.
+  const desde = new Date(Date.now() - 4 * 60 * 60000).toISOString()
   const { data: ocupados } = await supabase
     .from('agendamentos')
-    .select('inicio, duracao_min')
+    .select('id, inicio, duracao_min')
     .eq('status', 'agendada')
-    .gte('inicio', new Date().toISOString())
-  const ocupadosSet = new Set((ocupados ?? []).map((a) => new Date(a.inicio).getTime()))
+    .gte('inicio', desde)
+  const intervalos = (ocupados ?? [])
+    .filter((a) => a.id !== opcoes?.ignorarAgendamentoId)
+    .map((a) => {
+      const ini = new Date(a.inicio).getTime()
+      return [ini, ini + a.duracao_min * 60000] as const
+    })
+  const cabe = (ini: number) =>
+    intervalos.every(([ocIni, ocFim]) => ini + duracaoMin * 60000 <= ocIni || ini >= ocFim)
 
   const vagas: { inicio: string }[] = []
-  const passoMin = config?.duracao_ciclo_min ?? 50
+  const hoje = dataISO(new Date())
   // varre os próximos 21 dias na grade
   for (let d = 0; d < 21 && vagas.length < quantas; d++) {
-    const dia = new Date()
-    dia.setDate(dia.getDate() + d)
-    const diaSemana = Number(
-      dia.toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo', weekday: 'narrow', day: 'numeric' }) &&
-      new Date(dia.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getDay(),
-    )
-    const naGrade = grade.find((g) => g.dia === diaSemana)
+    const data = somarDias(hoje, d)
+    const naGrade = grade.find((g) => g.dia === diaDaSemana(data))
     if (!naGrade) continue
     for (const [ini, fim] of naGrade.turnos) {
-      const [hIni, mIni] = ini.split(':').map(Number)
-      const [hFim, mFim] = fim.split(':').map(Number)
-      const dataISO = dia.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
-      let cursor = new Date(`${dataISO}T${String(hIni).padStart(2, '0')}:${String(mIni).padStart(2, '0')}:00-03:00`)
-      const limite = new Date(`${dataISO}T${String(hFim).padStart(2, '0')}:${String(mFim).padStart(2, '0')}:00-03:00`)
-      while (cursor.getTime() + passoMin * 60000 <= limite.getTime() && vagas.length < quantas) {
-        if (cursor.getTime() > Date.now() && !ocupadosSet.has(cursor.getTime())) {
+      let cursor = instanteDoDia(data, ini)
+      const limite = instanteDoDia(data, fim)
+      while (cursor.getTime() + duracaoMin * 60000 <= limite.getTime() && vagas.length < quantas) {
+        if (cursor.getTime() > Date.now() && cabe(cursor.getTime())) {
           vagas.push({ inicio: cursor.toISOString() })
         }
         cursor = new Date(cursor.getTime() + passoMin * 60000)

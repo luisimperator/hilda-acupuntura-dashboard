@@ -49,6 +49,23 @@ export function ehHoje(d: string | Date): boolean {
   return dataISO(d) === dataISO(new Date())
 }
 
+/** Soma dias a uma data AAAA-MM-DD sem depender do fuso do aparelho. */
+export function somarDias(dataAMD: string, dias: number): string {
+  const [a, m, d] = dataAMD.split('-').map(Number)
+  return new Date(Date.UTC(a, m - 1, d + dias)).toISOString().slice(0, 10)
+}
+
+/** Dia da semana (0 = domingo) de uma data AAAA-MM-DD, sem escorregar de fuso. */
+export function diaDaSemana(dataAMD: string): number {
+  const [a, m, d] = dataAMD.split('-').map(Number)
+  return new Date(Date.UTC(a, m - 1, d)).getUTCDay()
+}
+
+/** Instante de um horário "HH:MM" de um dia AAAA-MM-DD, no fuso do consultório. */
+export function instanteDoDia(dataAMD: string, hhmm: string): Date {
+  return new Date(`${dataAMD}T${hhmm.padStart(5, '0')}:00-03:00`)
+}
+
 export function ehAmanha(d: string | Date): boolean {
   const amanha = new Date(Date.now() + 24 * 60 * 60 * 1000)
   return dataISO(d) === dataISO(amanha)

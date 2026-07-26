@@ -63,7 +63,8 @@ export default function NovaPaciente() {
   const [vagas, setVagas] = useState<Vaga[] | null>(null)
   useEffect(() => {
     let ativo = true
-    proximasVagasLivres(2)
+    // Lead entra pela Primeira Sessão Completa — não ofereça vaga que não a comporta.
+    proximasVagasLivres(2, { paraPrimeira: true })
       .then((v) => {
         if (ativo) setVagas(v)
       })
