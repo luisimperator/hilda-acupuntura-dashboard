@@ -59,7 +59,12 @@ export default function Agenda() {
   const [cartao, setCartao] = useState<CartaoAberto | null>(null)
   const [remarcando, setRemarcando] = useState<Remarcando | null>(null)
   const [destinoRemarcar, setDestinoRemarcar] = useState<Date | null>(null)
+  // Remarcar começa na folha rápida (as próximas vagas livres). Só quem pede
+  // "escolher outra vaga na agenda" cai no modo de varrer a semana.
+  const [folhaRemarcar, setFolhaRemarcar] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+
+  const varrendoAgenda = remarcando != null && !folhaRemarcar
 
   const recarregar = useCallback(() => {
     carregarSemana(desloc).then(
@@ -137,7 +142,7 @@ export default function Agenda() {
   }
 
   function aoTocarVagaLivre(dia: DiaAgenda, inicio: Date) {
-    if (remarcando) {
+    if (varrendoAgenda && remarcando) {
       if (!vagaComporta(dia, inicio, remarcando.agendamento.duracao_min, remarcando.agendamento.id)) {
         setToast(
           `Essa vaga não comporta a sessão de ${remarcando.agendamento.duracao_min} min — o horário seguinte já tem gente.`,
@@ -159,8 +164,16 @@ export default function Agenda() {
     setCartao({ agendamento, paciente })
   }
 
-  const modo: ModoAgenda = remarcando ? 'remarcando' : marcandoPara ? 'marcando' : 'normal'
-  const rotuloVagaLivre = remarcando
+  function fecharRemarcar(concluiu: boolean) {
+    setDestinoRemarcar(null)
+    // Fechar a folha rápida sem remarcar sai de vez; no modo agenda, ela só
+    // volta para a semana e continua escolhendo.
+    if (concluiu || folhaRemarcar) setRemarcando(null)
+    setFolhaRemarcar(false)
+  }
+
+  const modo: ModoAgenda = varrendoAgenda ? 'remarcando' : marcandoPara ? 'marcando' : 'normal'
+  const rotuloVagaLivre = varrendoAgenda
     ? 'mover a sessão para cá'
     : marcandoPara
       ? `+ marcar ${nomeCurto(marcandoPara.paciente)} aqui`
@@ -174,7 +187,7 @@ export default function Agenda() {
       </div>
 
       {/* Título persistente do modo remarcar — sem "modo" que ela possa esquecer */}
-      {remarcando && (
+      {varrendoAgenda && remarcando && (
         <div
           className="card"
           style={{
@@ -204,7 +217,7 @@ export default function Agenda() {
       )}
 
       {/* Marcando para uma paciente vinda da Ficha/Sessão (?paciente=…) */}
-      {!remarcando && marcandoPara && (
+      {!varrendoAgenda && marcandoPara && (
         <div
           className="card"
           style={{
@@ -323,6 +336,8 @@ export default function Agenda() {
           aoVerPaciente={() => navigate(`/paciente/${cartao.agendamento.paciente_id}`)}
           aoRemarcar={() => {
             setRemarcando({ agendamento: cartao.agendamento, paciente: cartao.paciente })
+            setDestinoRemarcar(null)
+            setFolhaRemarcar(true)
             setCartao(null)
           }}
           recarregar={recarregar}
@@ -331,16 +346,14 @@ export default function Agenda() {
         />
       )}
 
-      {remarcando && destinoRemarcar && (
+      {remarcando && (folhaRemarcar || destinoRemarcar) && (
         <DialogoRemarcar
           agendamento={remarcando.agendamento}
           paciente={remarcando.paciente}
           novoInicio={destinoRemarcar}
           aoRemarcou={recarregar}
-          aoFechar={(concluiu) => {
-            setDestinoRemarcar(null)
-            if (concluiu) setRemarcando(null)
-          }}
+          aoEscolherNaAgenda={folhaRemarcar ? () => setFolhaRemarcar(false) : undefined}
+          aoFechar={fecharRemarcar}
         />
       )}
 

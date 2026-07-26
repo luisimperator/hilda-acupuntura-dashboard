@@ -4,8 +4,12 @@
 // nem oferece "+ marcar aqui".
 
 import { supabase } from '../../lib/supabase'
-import { dataISO } from '../../lib/datas'
+import { dataISO, instanteDoDia, somarDias } from '../../lib/datas'
 import type { Agendamento, Ciclo, Paciente } from '../../lib/tipos'
+
+// Utilitários de data que a Agenda usa desde sempre — a casa deles agora é
+// lib/datas.ts (o sessaoService também precisa), reexportados aqui.
+export { instanteDoDia, somarDias }
 
 export type AgTipo = Agendamento['tipo']
 
@@ -49,17 +53,6 @@ export const NOME_TIPO_AG: Record<AgTipo, string> = {
 
 export function capitalizar(texto: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1)
-}
-
-/** Soma dias a uma data AAAA-MM-DD sem depender do fuso do aparelho. */
-export function somarDias(dataAMD: string, dias: number): string {
-  const [a, m, d] = dataAMD.split('-').map(Number)
-  return new Date(Date.UTC(a, m - 1, d + dias)).toISOString().slice(0, 10)
-}
-
-/** Instante de um horário "HH:MM" de um dia AAAA-MM-DD, no fuso do consultório. */
-export function instanteDoDia(dataAMD: string, hhmm: string): Date {
-  return new Date(`${dataAMD}T${hhmm.padStart(5, '0')}:00-03:00`)
 }
 
 /** Segunda-feira da semana de hoje, deslocada N semanas (0 = esta semana). */
@@ -245,6 +238,34 @@ export async function criarAgendamento(args: {
     await supabase.from('pacientes').update({ status: 'primeira_agendada' }).eq('id', args.paciente.id)
   }
   return { id: data.id }
+}
+
+/**
+ * Agendamento para AGORA — a paciente chegou fora do horário (ou sem horário).
+ * O início é o instante real da chegada, então ele não briga com a grade nem
+ * com o índice único de slot. Se por azar cair no mesmo segundo de outro,
+ * anda um minuto e tenta de novo.
+ */
+export async function criarAgendamentoAgora(args: {
+  paciente: Paciente
+  cicloId: string | null
+  tipo: AgTipo
+  duracaoMin: number
+}): Promise<{ erro: string } | { id: string }> {
+  const agora = new Date()
+  agora.setMilliseconds(0)
+  for (let tentativa = 0; tentativa < 3; tentativa++) {
+    const inicio = new Date(agora.getTime() + tentativa * 60000)
+    const r = await criarAgendamento({ ...args, inicio })
+    if ('id' in r || r.erro !== ERRO_SLOT_OCUPADO) return r
+  }
+  return { erro: ERRO_GUARDAR }
+}
+
+/** Uma linha de agendamento pelo id — para seguir o fluxo depois de criar/remarcar. */
+export async function buscarAgendamento(id: string): Promise<Agendamento | null> {
+  const r = await supabase.from('agendamentos').select('*').eq('id', id).maybeSingle()
+  return r.data ?? null
 }
 
 export async function marcarFalta(agendamentoId: string): Promise<string | null> {
